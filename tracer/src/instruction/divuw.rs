@@ -1,5 +1,5 @@
-use crate::utils::inline_helpers::InstrAssembler;
 use crate::utils::virtual_registers::VirtualRegisterAllocator;
+use crate::{instruction::addi::ADDI, utils::inline_helpers::InstrAssembler};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -136,10 +136,13 @@ impl RISCVTrace for DIVUW {
         asm.emit_b::<VirtualAssertValidUnsignedRemainder>(*a3, *t4, 0);
 
         // Sign-extend 32-bit result to 64 bits
-        asm.emit_i::<VirtualSignExtendWord>(self.operands.rd, *a2, 0);
+        asm.emit_i::<VirtualSignExtendWord>(*a2, *a2, 0);
 
         // Check that if we're dividing by 0, the result is u64::MAX (sign extended to 64 bits)
-        asm.emit_b::<VirtualAssertValidDiv0>(*t4, self.operands.rd, 0);
+        asm.emit_b::<VirtualAssertValidDiv0>(*t4, *a2, 0);
+
+        // Move result into rd
+        asm.emit_i::<ADDI>(self.operands.rd, *a2, 0);
         asm.finalize()
     }
 }
